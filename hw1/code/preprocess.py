@@ -28,29 +28,25 @@ def get_data(inputs_file_path, labels_file_path, num_examples):
 		image_header = np.frombuffer(bytestream.read(16))
 		image_data = np.frombuffer(bytestream.read(), np.uint8).astype(np.float32)/255
 		image_data = np.reshape(image_data, (num_examples, 784))
-		print(type(image_data[0][0]))
-		print(image_data[0])
 		
 	with open(labels_file_path, 'rb') as f2, gzip.GzipFile(fileobj=f2) as bytestream2:
 		label_header = np.frombuffer(bytestream2.read(8))
 		label_data = np.frombuffer(bytestream2.read(), np.uint8)
-		
-		print(type(label_data[0]))
-		print(label_data[-1000:-100])
-		print('len', len(label_data))
+
+	return image_data, label_data
 
 
 # 60k
-a = 'train-images-idx3-ubyte.gz'
-b = 'train-labels-idx1-ubyte.gz'
+# a = 'train-images-idx3-ubyte.gz'
+# b = 'train-labels-idx1-ubyte.gz'
 
-# 10k
-c = 't10k-images-idx3-ubyte.gz'
+# # 10k
+# c = 't10k-images-idx3-ubyte.gz'
 
-name = a
-l_name = b
+# name = a
+# l_name = b
 
-images = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\" + name
-labels = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\" + l_name
+# images = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\" + name
+# labels = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\" + l_name
 
-get_data(images,labels,60000)
+# get_data(images,labels,60000)

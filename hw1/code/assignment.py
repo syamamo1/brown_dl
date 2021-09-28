@@ -2,6 +2,13 @@ from __future__ import absolute_import
 from matplotlib import pyplot as plt
 import numpy as np
 from preprocess import get_data
+import time
+
+# data
+# bs = 1, time = 26s, loss = 1.7, accuracy = 87
+# bs = 15, time = 9s, loss = 0.43, accuracy = 89 
+# bs = 50, time = 7s, loss = 0.33, accuracy = 90 
+# bs = 300, time = 7s, loss = 0.34, accuracy = 90 
 
 class Model:
     """
@@ -35,15 +42,15 @@ class Model:
         """
         # TODO: Write the forward pass logic for your model
         # TODO: Calculate, then return, the probability for each class per image using the Softmax equation
-        probabilities = np.zeros((self.batch_size, self.num_classes))
+        probabilities = np.zeros((len(inputs), self.num_classes))
 
         ind = 0
         for image in inputs:
             linear_layer = np.dot(image, self.W) + self.b
-            softmax = np.exp(linear_layer)
+            softmax = np.exp(linear_layer)/(np.sum(np.exp(linear_layer)))
             # [1x784][784x10]+[1x10] = [1x10] <-- probability of image being each number
-            probabilities[ind] += softmax/np.linalg.norm(linear_layer)
-
+            probabilities[ind] += softmax
+            ind += 1
         # [100x10]
         return probabilities
     
@@ -71,7 +78,7 @@ class Model:
             total_loss += H
             ind += 1
 
-        average_loss = total_loss/self.batch_size
+        average_loss = total_loss/len(labels)
         return average_loss
     
     def back_propagation(self, inputs, probabilities, labels):
@@ -90,21 +97,24 @@ class Model:
         """
         # TODO: calculate the gradients for the weights and the gradients for the bias with respect to average loss
 
-        # Adjust weights and biases according to average_loss
         probabilities = self.call(inputs)
-        delta_W = np.zeros((self.input_size, 10))
-        delta_b = np.zeros(10)
+        delta_W = np.zeros((self.input_size, self.num_classes))
+        delta_b = np.zeros((1, self.num_classes))
 
-        for i in range(self.batch_size):
+        i = 0
+        for input in inputs:
+            image = np.reshape(input, (self.input_size, 1))
             probabilities_i = probabilities[i]
             label = labels[i]
-            for j in range(self.num_classes):
-                y_j = 1 if j == label else 0
-                for num in range(self.input_size):
-                    delta_W[num,j] += -1 * self.learning_rate * (y_j - probabilities_i[j]) * inputs[i][num]
-                    delta_b[j] += -1 * self.learning_rate * (y_j - probabilities_i[j]) * 1
+            y = np.zeros((1, 10))
+            y[0, label] += 1
 
-        return delta_W/self.batch_size
+            delta_W += 1 * self.learning_rate * np.matmul(image, (y - probabilities_i))
+            delta_b += 1 * self.learning_rate * (y - probabilities_i)
+            i+=1
+
+        print('max dW', np.max((delta_W)/len(labels)), 'min dW', np.min((delta_W)/len(labels)))
+        return delta_W/len(labels), delta_b[0]/len(labels)
 
 
     def accuracy(self, probabilities, labels):
@@ -119,12 +129,12 @@ class Model:
         i = 0
         num_correct = 0
         for label in labels:
-            guess = max(probabilities[i])
+            guess = np.argmax(probabilities[i])
             if guess == label:
                 num_correct += 1
             i += 1
         
-        return num_correct/self.batch_size
+        return num_correct/len(labels)
 
     def gradient_descent(self, gradW, gradB):
         '''
@@ -152,13 +162,19 @@ def train(model, train_inputs, train_labels):
     # TODO: Iterate over the training inputs and labels, in model.batch_size increments
     # TODO: For every batch, compute then descend the gradients for the model's weights
     # Optional TODO: Call visualize_loss and observe the loss per batch as the model trains.
+    losses = []
     for i in range(int(len(train_inputs)/model.batch_size)):
+        print('Batch', i, '------------------------------------------------')
         inputs = train_inputs[i*model.batch_size:(i+1)*model.batch_size]
         labels = train_labels[i*model.batch_size:(i+1)*model.batch_size]
         probabilities = model.call(inputs)
         dW, dB = model.back_propagation(inputs, probabilities, labels)
         model.gradient_descent(dW, dB)
+        loss_i = model.loss(probabilities, labels)
+        losses.append(loss_i)
+        print('loss', loss_i)
 
+    visualize_loss(losses)
 
 def test(model, test_inputs, test_labels):
     """
@@ -171,9 +187,14 @@ def test(model, test_inputs, test_labels):
     """
     # TODO: Iterate over the testing inputs and labels
     # TODO: Return accuracy across testing set
-    
-    
-    pass
+    print('In test')
+
+    probabilities = model.call(test_inputs)
+    average_loss = model.loss(probabilities, test_labels)
+    model_accuracy = model.accuracy(probabilities, test_labels)
+
+    print('average loss', average_loss)
+    return model_accuracy
 
 def visualize_loss(losses):
     """
@@ -228,18 +249,31 @@ def main():
     batches you run through in a single epoch. You should receive a final accuracy on the testing examples of > 80%.
     :return: None
     '''
-
+    start_time = time.time()
     # TODO: load MNIST train and test examples into train_inputs, train_labels, test_inputs, test_labels
+    p1 = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\train-images-idx3-ubyte.gz"
+    p2 = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\train-labels-idx1-ubyte.gz"
+    p3 = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\t10k-images-idx3-ubyte.gz"
+    p4 = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\t10k-labels-idx1-ubyte.gz"
+    train_inputs, train_labels = get_data(p1, p2, 60000)
+    test_inputs, test_labels = get_data(p3, p4, 10000)
 
     # TODO: Create Model
+    mod = Model()
 
     # TODO: Train model by calling train() ONCE on all data
+    train(mod, train_inputs, train_labels)
 
     # TODO: Test the accuracy by calling test() after running train()
+    print('About to test')
+    model_accuracy = test(mod, test_inputs, test_labels)
+    print('Test accuracy', model_accuracy)
+    probabilities = mod.call(test_inputs)
+    print('Program runtime:', time.time()-start_time)
 
     # TODO: Visualize the data by using visualize_results()
+    visualize_results(test_inputs[0:10], probabilities[0:10], np.reshape(test_labels, (len(test_inputs), 1))[0:10])
 
-    pass
-    
+
 if __name__ == '__main__':
     main()
