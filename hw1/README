@@ -1,1 +1,7 @@
-README
+Model statistics:
+
+batch_size = 100 - train time = 7s, average loss = 0.34, accuracy = 90.0%
+Smaller batch sizes made train time increase, loss increase, and accuracy decrease. 
+At around batch size = 50 the train time and loss stopped decreasing and accuracy stopped increasing. 
+
+No known bugs or errors.

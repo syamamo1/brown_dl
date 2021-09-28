@@ -97,7 +97,6 @@ class Model:
         """
         # TODO: calculate the gradients for the weights and the gradients for the bias with respect to average loss
 
-        probabilities = self.call(inputs)
         delta_W = np.zeros((self.input_size, self.num_classes))
         delta_b = np.zeros((1, self.num_classes))
 
@@ -109,6 +108,7 @@ class Model:
             y = np.zeros((1, 10))
             y[0, label] += 1
 
+            # dW = -alpha * (p_j - y_j) * x_i = alpha * (y_j - p_j) * x_i
             delta_W += 1 * self.learning_rate * np.matmul(image, (y - probabilities_i))
             delta_b += 1 * self.learning_rate * (y - probabilities_i)
             i+=1
@@ -162,9 +162,11 @@ def train(model, train_inputs, train_labels):
     # TODO: Iterate over the training inputs and labels, in model.batch_size increments
     # TODO: For every batch, compute then descend the gradients for the model's weights
     # Optional TODO: Call visualize_loss and observe the loss per batch as the model trains.
+
+    start_time = time.time()
     losses = []
     for i in range(int(len(train_inputs)/model.batch_size)):
-        print('Batch', i, '------------------------------------------------')
+        print('------------------------------------------------\nBatch', i)
         inputs = train_inputs[i*model.batch_size:(i+1)*model.batch_size]
         labels = train_labels[i*model.batch_size:(i+1)*model.batch_size]
         probabilities = model.call(inputs)
@@ -172,8 +174,9 @@ def train(model, train_inputs, train_labels):
         model.gradient_descent(dW, dB)
         loss_i = model.loss(probabilities, labels)
         losses.append(loss_i)
-        print('loss', loss_i)
+        print('loss', loss_i, '\n------------------------------------------------')
 
+    print('Model train time:', time.time()-start_time)
     visualize_loss(losses)
 
 def test(model, test_inputs, test_labels):
@@ -187,7 +190,6 @@ def test(model, test_inputs, test_labels):
     """
     # TODO: Iterate over the testing inputs and labels
     # TODO: Return accuracy across testing set
-    print('In test')
 
     probabilities = model.call(test_inputs)
     average_loss = model.loss(probabilities, test_labels)
@@ -249,7 +251,7 @@ def main():
     batches you run through in a single epoch. You should receive a final accuracy on the testing examples of > 80%.
     :return: None
     '''
-    start_time = time.time()
+
     # TODO: load MNIST train and test examples into train_inputs, train_labels, test_inputs, test_labels
     p1 = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\train-images-idx3-ubyte.gz"
     p2 = "C:\\Users\smy18\workspace2\dl\hw1-mnist-syamamo1\hw1\\train-labels-idx1-ubyte.gz"
@@ -265,13 +267,11 @@ def main():
     train(mod, train_inputs, train_labels)
 
     # TODO: Test the accuracy by calling test() after running train()
-    print('About to test')
     model_accuracy = test(mod, test_inputs, test_labels)
-    print('Test accuracy', model_accuracy)
     probabilities = mod.call(test_inputs)
-    print('Program runtime:', time.time()-start_time)
 
     # TODO: Visualize the data by using visualize_results()
+    print('Test accuracy', model_accuracy)
     visualize_results(test_inputs[0:10], probabilities[0:10], np.reshape(test_labels, (len(test_inputs), 1))[0:10])
 
 
