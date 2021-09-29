@@ -97,8 +97,8 @@ class Model:
         """
         # TODO: calculate the gradients for the weights and the gradients for the bias with respect to average loss
 
-        delta_W = np.zeros((self.input_size, self.num_classes))
-        delta_b = np.zeros((1, self.num_classes))
+        gradW = np.zeros((self.input_size, self.num_classes))
+        gradB = np.zeros((1, self.num_classes))
 
         i = 0
         for input in inputs:
@@ -109,12 +109,12 @@ class Model:
             y[0, label] += 1
 
             # dW = -alpha * (p_j - y_j) * x_i = alpha * (y_j - p_j) * x_i
-            delta_W += 1 * self.learning_rate * np.matmul(image, (y - probabilities_i))
-            delta_b += 1 * self.learning_rate * (y - probabilities_i)
+            gradW += np.matmul(image, (probabilities_i - y))
+            gradB += (probabilities_i - y)
             i+=1
 
-        print('max dW', np.max((delta_W)/len(labels)), 'min dW', np.min((delta_W)/len(labels)))
-        return delta_W/len(labels), delta_b[0]/len(labels)
+        print('max dW', np.max((gradW)/len(labels)), 'min dW', np.min((gradW)/len(labels)))
+        return gradW/len(labels), gradB[0]/len(labels)
 
 
     def accuracy(self, probabilities, labels):
@@ -146,8 +146,8 @@ class Model:
         '''
         # TODO: change the weights and biases of the model to descent the gradient
         
-        self.W += gradW
-        self.b += gradB
+        self.W += -1 * self.learning_rate * gradW
+        self.b += -1 * self.learning_rate * gradB
 
     
 def train(model, train_inputs, train_labels):
